@@ -14,13 +14,13 @@ app.get("/user",async(req,res)=>{
   try{
     const user=await UserSchema.findOne({emailId:emailId});
     if(user){
-      res.status(200).json({message:"user fetched successfully",data:user});
+      res.status(200).json({message:"user fetched successfully"+user});
     }else{
       res.status(404).json({message:"user not found"});
     }
   }
   catch(err){
-    res.status(500).json({message:"error while fetching user",data:err.message});
+    res.status(500).json({message:"error while fetching user"+err.message});
   }
 });
 
@@ -30,9 +30,9 @@ app.get("/feed", async (req, res) => {
     const users = await UserSchema.find({});
     res
       .status(200)
-      .json({ message: "users fetched successfully", data: users });
+      .json({ message: "users fetched successfully"+ users });
   } catch (err) {
-    res.status(404).json({ message: "users not found", data: err.message });
+    res.status(404).json({ message: "users not found"+err.message });
   }
 });
 
@@ -48,7 +48,7 @@ app.delete("/user",async(req,res)=>{
     }
   }
   catch(err){
-    res.status(500).json({message:"error while deleting user",data:err.message});
+    res.status(500).json({message:"error while deleting user"+err.message});
   }
 })
 
@@ -63,7 +63,7 @@ app.patch("/user",async(req,res)=>{
     res.status(200).json({message:"user updated successfully"});
   }
   catch(err){
-    res.status(500).json({message:"error while updating user",data:err.message});
+    res.status(500).json({message:"error while updating user"+err.message});
   }
   
   
@@ -79,7 +79,7 @@ app.post("/signup", async (req, res) => {
     await user.save();
     res.send("user added succesfully ..");
   } catch (err) {
-    res.status(500).send("Error while saving user : ", err.message);
+    res.status(500).send("Error while saving user : " + err.message);
   }
 });
 
