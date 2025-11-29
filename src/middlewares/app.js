@@ -9,18 +9,19 @@ const app = express();
 app.use(express.json());
 
 //get one user by emailid
-app.get("/user",async(req,res)=>{
-  const emailId=req.body.emailId;
-  try{
-    const user=await UserSchema.findOne({emailId:emailId});
-    if(user){
-      res.status(200).json({message:"user fetched successfully"+user});
-    }else{
-      res.status(404).json({message:"user not found"});
+app.get("/user", async (req, res) => {
+  const emailId = req.body.emailId;
+  try {
+    const user = await UserSchema.findOne({ emailId: emailId });
+    if (user) {
+      res.status(200).json({ message: "user fetched successfully" + user });
+    } else {
+      res.status(404).json({ message: "user not found" });
     }
-  }
-  catch(err){
-    res.status(500).json({message:"error while fetching user"+err.message});
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "error while fetching user" + err.message });
   }
 });
 
@@ -28,52 +29,76 @@ app.get("/user",async(req,res)=>{
 app.get("/feed", async (req, res) => {
   try {
     const users = await UserSchema.find({});
-    res
-      .status(200)
-      .json({ message: "users fetched successfully"+ users });
+    res.status(200).json({ message: "users fetched successfully" + users });
   } catch (err) {
-    res.status(404).json({ message: "users not found"+err.message });
+    res.status(404).json({ message: "users not found" + err.message });
   }
 });
 
 // delete api
-app.delete("/user",async(req,res)=>{
+app.delete("/user", async (req, res) => {
   const userId = req.query.userId;
-  try{
-    const deletedUser= await UserSchema.findByIdAndDelete(userId);
-    if(deletedUser){
-      res.status(200).json({message:"user deleted successfully",data:deletedUser});
-    }else{
-      res.status(404).json({message:"user not found"});
+  try {
+    const deletedUser = await UserSchema.findByIdAndDelete(userId);
+    if (deletedUser) {
+      res
+        .status(200)
+        .json({ message: "user deleted successfully", data: deletedUser });
+    } else {
+      res.status(404).json({ message: "user not found" });
     }
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "error while deleting user" + err.message });
   }
-  catch(err){
-    res.status(500).json({message:"error while deleting user"+err.message});
-  }
-})
+});
 
 //update api
-app.patch("/user",async(req,res)=>{
-
-  const emailId= req.body.emailId;
+app.patch("/user", async (req, res) => {
+  const emailId = req.body.emailId;
   const data = req.body;
 
-  try{
-    await UserSchema.findOneAndUpdate({emailId:emailId},data);
-    res.status(200).json({message:"user updated successfully"});
-  }
-  catch(err){
-    res.status(500).json({message:"error while updating user"+err.message});
-  }
-  
-  
+  //api validation
+  const AllowedUpdates = ["firstName", "lastName", "password", "age"];
 
+  const requestedUpdates = Object.keys(data).every((k) =>
+    AllowedUpdates.includes(k)
+  );
+
+  if (!requestedUpdates) {
+    throw new Error("invalid updates requested");
+  }
+
+  try {
+    await UserSchema.findOneAndUpdate({ emailId: emailId }, data);
+    res.status(200).json({ message: "user updated successfully" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "error while updating user" + err.message });
+  }
 });
 
 //signup api
 app.post("/signup", async (req, res) => {
   //creating a new instance of the user model
-  const user = new UserSchema(req.body);
+  const data = req.body;
+  const user = new UserSchema(data);
+
+  //api validation
+  const AllowedUpdates = ["firstName", "lastName","emailId", "password"];
+
+  const requestedUpdates = Object.keys(data).every((k) =>
+    AllowedUpdates.includes(k)
+  );
+
+  if (!requestedUpdates) {
+    console.log(requestedUpdates);
+    res.status(404).send("invalid updates requested");
+    return;
+  }
+
   try {
     //return a promise.
     await user.save();
