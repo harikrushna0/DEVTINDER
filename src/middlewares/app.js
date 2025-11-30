@@ -2,6 +2,7 @@ const express = require("express");
 const connectDB = require("../config/database");
 const UserSchema = require("../model/user");
 const { tr } = require("@faker-js/faker");
+const { validateSignupData } = require("../utils/validation");
 const app = express();
 
 //run on every request
@@ -82,29 +83,46 @@ app.patch("/user", async (req, res) => {
 
 //signup api
 app.post("/signup", async (req, res) => {
-  //creating a new instance of the user model
-  const data = req.body;
-  const user = new UserSchema(data);
-
-  //api validation
-  const AllowedUpdates = ["firstName", "lastName","emailId", "password"];
-
-  const requestedUpdates = Object.keys(data).every((k) =>
-    AllowedUpdates.includes(k)
-  );
-
-  if (!requestedUpdates) {
-    console.log(requestedUpdates);
-    res.status(404).send("invalid updates requested");
-    return;
-  }
-
   try {
-    //return a promise.
-    await user.save();
-    res.send("user added succesfully ..");
+    //creating a new instance of the user model
+    validateSignupData(req);
+
+    const { password } = req.password;
+    //encrpt the password
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    const data = req.body;
+
+    const user = new UserSchema({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      emailId: data.emailId,
+      password: hashPassword,
+    });
+
+    //api validation
+    const AllowedUpdates = ["firstName", "lastName", "emailId", "password"];
+
+    const requestedUpdates = Object.keys(data).every((k) =>
+      AllowedUpdates.includes(k)
+    );
+
+    if (!requestedUpdates) {
+      console.log(requestedUpdates);
+      res.status(404).send("invalid updates requested");
+      return;
+    }
+
+    try {
+      //return a promise.
+      await user.save();
+      res.send("user added succesfully ..");
+    } catch (err) {
+      res.status(500).send("Error while saving user : " + err.message);
+    }
   } catch (err) {
-    res.status(500).send("Error while saving user : " + err.message);
+    res.status(500).json({ message: "error during signup" + err.message });
   }
 });
 
