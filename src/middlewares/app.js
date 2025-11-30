@@ -1,7 +1,7 @@
 const express = require("express");
 const connectDB = require("../config/database");
 const UserSchema = require("../model/user");
-const { tr } = require("@faker-js/faker");
+const bcrypt = require("bcrypt");
 const { validateSignupData } = require("../utils/validation");
 const app = express();
 
@@ -81,13 +81,34 @@ app.patch("/user", async (req, res) => {
   }
 });
 
+//login api
+app.post("/login", async (req, res) => {
+  const { emailId, password } = req.body;
+
+  try {
+    const user = await UserSchema.findOne({ emailId: emailId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    res.status(200).json({ message: "Login successful", data: user });
+  } catch (err) {
+    res.status(500).json({ message: "Error during login: " + err.message });
+  }
+});
+
 //signup api
 app.post("/signup", async (req, res) => {
   try {
     //creating a new instance of the user model
     validateSignupData(req);
 
-    const { password } = req.password;
+    const { password } = req.body;
     //encrpt the password
 
     const hashPassword = await bcrypt.hash(password, 10);
