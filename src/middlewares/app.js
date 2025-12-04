@@ -4,7 +4,11 @@ const UserSchema = require("../model/user");
 const bcrypt = require("bcrypt");
 const { validateSignupData } = require("../utils/validation");
 const app = express();
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
+//middleware to parse cookie data
+app.use(cookieParser());
 //run on every request
 //use middleware to parse json body data
 app.use(express.json());
@@ -81,14 +85,48 @@ app.patch("/user", async (req, res) => {
   }
 });
 
+app.get("/profile", async (req, res) => {
+  try {
+    const cookie = req.cookies;
+
+    const { token } = cookie;
+
+    if (!token) {
+      throw new Error("Token is Not Valid");
+    }
+
+    const decoded_msg_from_token = await jwt.verify(token, "DevTinder@123");
+
+    console.log(decoded_msg_from_token);
+
+    const id = decoded_msg_from_token._id;
+
+    const userinfo = await UserSchema.findOne({ _id: id });
+
+    if (!userinfo) {
+      throw new Error("User does not exit please login again");
+    }
+
+    res.send(userinfo);
+  } catch (err) {
+    res.status(400).send("Error : " + err.message);
+  }
+});
 //login api
 app.post("/login", async (req, res) => {
   const { emailId, password } = req.body;
+  const user = await UserSchema.findOne({ emailId: emailId });
+  if (!user) {
+    return res.status(404).json({ message: "Invalide Credential" });
+  }
 
+  const token = await jwt.sign({ _id: user._id }, "DevTinder@123");
+
+  // set cookie without options (defaults apply)
+  res.cookie("token", token);
   try {
-    const user = await UserSchema.findOne({ emailId: emailId });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Invalide Credential" });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
