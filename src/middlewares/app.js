@@ -96,9 +96,6 @@ app.get("/profile", async (req, res) => {
     }
 
     const decoded_msg_from_token = await jwt.verify(token, "DevTinder@123");
-
-    console.log(decoded_msg_from_token);
-
     const id = decoded_msg_from_token._id;
 
     const userinfo = await UserSchema.findOne({ _id: id });
