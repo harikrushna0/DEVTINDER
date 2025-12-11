@@ -6,6 +6,7 @@ const { validateSignupData } = require("../utils/validation");
 const app = express();
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middlewares/auth");
 
 //middleware to parse cookie data
 app.use(cookieParser());
@@ -85,25 +86,9 @@ app.patch("/user", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", authMiddleware , async (req, res) => {
   try {
-    const cookie = req.cookies;
-
-    const { token } = cookie;
-
-    if (!token) {
-      throw new Error("Token is Not Valid");
-    }
-
-    const decoded_msg_from_token = await jwt.verify(token, "DevTinder@123");
-    const id = decoded_msg_from_token._id;
-
-    const userinfo = await UserSchema.findOne({ _id: id });
-
-    if (!userinfo) {
-      throw new Error("User does not exit please login again");
-    }
-
+    const userinfo = req.user;
     res.send(userinfo);
   } catch (err) {
     res.status(400).send("Error : " + err.message);
