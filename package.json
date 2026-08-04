@@ -6,11 +6,16 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "scripts":{
-    "start":"node src/middlewares/app.js",
-    "dev":"nodemon src/middlewares/app.js"
+  "scripts": {
+    "start": "node src/middlewares/app.js",
+    "dev": "nodemon src/middlewares/app.js",
+    "test": "jest"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }
